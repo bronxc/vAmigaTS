@@ -34,5 +34,9 @@ Similar to shift3 with different shift values for even and odd bitplanes.
 
 This test mimics parts of the Copper list of "Lupo Alberto (1991)(Idea)" which failed in earlier versions of vAmiga.
 
+#### ddfaros1 - ddfaros3
 
-Dirk Hoffmann, 2020 - 2022
+These tests have been created to track down an vAmiga issue with the 2025 Aros release. When DDFSTRT and DDFSTOP were set the same value (e.g. initialized to 0) and then set to their real values, vAmiga switched on bitplane DMA too early in some cases. This caused a disorted image when Aros was booted with both an ECS Agnus and ECS Denise plugged in. 
+
+
+Dirk Hoffmann, 2020 - 2025
