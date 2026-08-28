@@ -1,0 +1,4 @@
+regression setup A500_ECS_1MB /tmp/kick13.rom
+regression run /tmp/DIW_DIWH_diwswitch1_ecs.adf
+wait 9 seconds
+screenshot save DIW_DIWH_diwswitch1_ecs

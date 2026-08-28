@@ -1,5 +1,5 @@
-	include "../../../include/registers.i"
-	include "../../../include/ministartup.i"
+	include "../../../../include/registers.i"
+	include "../../../../include/ministartup.i"
 
 LVL1_INT_VECTOR		equ $64
 LVL2_INT_VECTOR		equ $68

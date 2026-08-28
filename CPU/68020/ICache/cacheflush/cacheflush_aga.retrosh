@@ -1,0 +1,18 @@
+# Regression testing script for vAmiga
+# Dirk W. Hoffmann, 2026
+
+# Setup the test environment
+# AGA Agnus, AGA Denise
+regression setup A1200_2MB /tmp/kick13.rom
+
+# Work around the A1200_2MB scheme's CPU_OVERCLOCKING default (see
+# Agnus/Registers/FMODE's README): booting from floppy under it still
+# fails even after CPU.cpp's debt-accounting fixes.
+cpu set OVERCLOCKING 0
+
+# Run the test
+regression run /tmp/68020_ICache_cacheflush_aga.adf
+wait 9 seconds
+
+# Exit with a screenshot
+screenshot save 68020_ICache_cacheflush_aga
