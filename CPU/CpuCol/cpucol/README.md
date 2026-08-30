@@ -81,4 +81,7 @@ optimizations; confirmed by comparing vasm's own listing output (`-L`)
 with and without it, so the colour handlers' machine code stays
 byte-for-byte identical to a plain (no `-m68020`) assembly.
 
+`cpucol2` and `cpucol3` are single-state variants of this same test --
+see their own READMEs for what's different.
+
 Dirk Hoffmann, 2026
