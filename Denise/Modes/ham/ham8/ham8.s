@@ -7,8 +7,32 @@
 ;
 ; The upper half of the screen is drawn in HAM6, the lower half in HAM8,
 ; with the copper timing ruler from the Agnus/DDF/ddf1 test between them.
-; Both halves are LORES: HAM8 requires BPU = 8 with the HIRES bit clear, so
-; there is no hires variant to compare against.
+; Both halves are LORES here; see ham8hires for the same comparison with
+; the HIRES bit set, which is a real, working combination on AGA.
+;
+;
+; THE POINTER RELOAD GETS ITS OWN BLANK LINE
+; ------------------------------------------
+;
+; Each band switches the bitplanes off, reloads all eight pointers on that
+; blank line, and switches the mode back on for its first display line.
+; Reloading on the first DISPLAY line instead -- which is what this test
+; used to do -- is only safe while bitplane DMA is off. With eight planes
+; fetching, bitplane DMA takes most of the slots, the copper is starved,
+; and the last MOVEs of the block (BPL6PT, BPL7PT, BPL8PT) land late,
+; leaving those planes a different distance into their buffers than planes
+; 1-5. bitBuf5 -- plane 8, the data field's MSB -- repeats every 8 bytes,
+; so a lag of 4 bytes mod 8 flips that bit and shifts the whole 64 entry
+; ramp by half its period, and the palette band (the only one whose reload
+; follows the ruler, where the bitplanes were already off) ends up 32
+; pixels out against the three modify bands.
+;
+; That artefact is copper/bitplane-DMA contention, not HAM, so it does not
+; belong here -- but it is real and worth pinning down, so the original
+; timing is preserved verbatim in ham8_a and ham8hires_a. The blank-line
+; discipline used here is the one Agnus/Registers/FMODE/fmode.i already
+; documents for the same reason. The cost is one blank raster line per
+; band, so the bands are 19 display lines rather than 20.
 ;
 ;
 ; WHAT DIFFERS BETWEEN THE TWO MODES
@@ -355,8 +379,12 @@ bandTable:
 
 
 ; PTRBLOCK -- the eight pointer MOVE pairs of one band, emitted as zero and
-; filled in at startup from bandTable. Sixteen MOVEs take 32 color clocks;
-; started at hpos $01 they are all done by hpos $23, well ahead of DDFSTRT.
+; filled in at startup from bandTable. Sixteen MOVEs take 32 color clocks,
+; so started at hpos $01 they are done by hpos $23, ahead of DDFSTRT -- but
+; only with bitplane DMA switched off. With eight planes fetching, DMA takes
+; most of the slots, the copper is starved, and the last MOVEs land late;
+; see the reload note in the header. Every band therefore reloads on a blank
+; line, which is why each block is preceded by a BPLCON0_OFF write.
 PTRBLOCK	MACRO
 	dc.w    BPL1PTH,$0000
 	dc.w    BPL1PTL,$0000
@@ -394,31 +422,42 @@ copper:
 	;
 	; HAM6 band 1 (lines $30-$43): code 00, the palette
 	;
-	dc.w    $3001,$FFFE
+	dc.w    $2F01,$FFFE
+	dc.w    BPLCON0,BPLCON0_OFF
 h6set:
 	PTRBLOCK
+	dc.w    $3001,$FFFE
 	dc.w    BPLCON0,BPLCON0_HAM6
 
 	;
 	; HAM6 band 2 (lines $44-$57): code 10, modify red
 	;
-	dc.w    $4401,$FFFE
+	dc.w    $4301,$FFFE
+	dc.w    BPLCON0,BPLCON0_OFF
 h6red:
 	PTRBLOCK
+	dc.w    $4401,$FFFE
+	dc.w    BPLCON0,BPLCON0_HAM6
 
 	;
 	; HAM6 band 3 (lines $58-$6B): code 11, modify green
 	;
-	dc.w    $5801,$FFFE
+	dc.w    $5701,$FFFE
+	dc.w    BPLCON0,BPLCON0_OFF
 h6green:
 	PTRBLOCK
+	dc.w    $5801,$FFFE
+	dc.w    BPLCON0,BPLCON0_HAM6
 
 	;
 	; HAM6 band 4 (lines $6C-$7F): code 01, modify blue
 	;
-	dc.w    $6C01,$FFFE
+	dc.w    $6B01,$FFFE
+	dc.w    BPLCON0,BPLCON0_OFF
 h6blue:
 	PTRBLOCK
+	dc.w    $6C01,$FFFE
+	dc.w    BPLCON0,BPLCON0_HAM6
 
 	;
 	; Copper timing ruler (from ddf1), between the two halves. Each MOVE
@@ -475,31 +514,42 @@ h6blue:
 	;
 	; HAM8 band 1 (lines $90-$A3): code 00, the palette
 	;
-	dc.w    $9001,$FFFE
+	dc.w    $8F01,$FFFE
+	dc.w    BPLCON0,BPLCON0_OFF
 h8set:
 	PTRBLOCK
+	dc.w    $9001,$FFFE
 	dc.w    BPLCON0,BPLCON0_HAM8
 
 	;
 	; HAM8 band 2 (lines $A4-$B7): code 10, modify red
 	;
-	dc.w    $A401,$FFFE
+	dc.w    $A301,$FFFE
+	dc.w    BPLCON0,BPLCON0_OFF
 h8red:
 	PTRBLOCK
+	dc.w    $A401,$FFFE
+	dc.w    BPLCON0,BPLCON0_HAM8
 
 	;
 	; HAM8 band 3 (lines $B8-$CB): code 11, modify green
 	;
-	dc.w    $B801,$FFFE
+	dc.w    $B701,$FFFE
+	dc.w    BPLCON0,BPLCON0_OFF
 h8green:
 	PTRBLOCK
+	dc.w    $B801,$FFFE
+	dc.w    BPLCON0,BPLCON0_HAM8
 
 	;
 	; HAM8 band 4 (lines $CC-$DF): code 01, modify blue
 	;
-	dc.w    $CC01,$FFFE
+	dc.w    $CB01,$FFFE
+	dc.w    BPLCON0,BPLCON0_OFF
 h8blue:
 	PTRBLOCK
+	dc.w    $CC01,$FFFE
+	dc.w    BPLCON0,BPLCON0_HAM8
 
 	;
 	; Done -- shut the display down again.
